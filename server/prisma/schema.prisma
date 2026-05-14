@@ -1,0 +1,183 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model OperationalBreakdown {
+  id              String           @id @default(uuid())
+  styleName       String
+  buyer           String
+  styleNumber     String
+  totalOperations Int              @default(0)
+  totalSAM        Float            @default(0)
+  operations      Operation[]
+  allocationPlans AllocationPlan[]
+  checklists      Checklist[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@map("operational_breakdowns")
+}
+
+model Operation {
+  id                String               @id @default(uuid())
+  obId              String
+  ob                OperationalBreakdown @relation(fields: [obId], references: [id], onDelete: Cascade)
+  slNo              Int
+  description       String
+  machineType       String
+  baseSAM           Float
+  allowancePercent  Float                @default(15)
+  totalSAM          Float
+  threadConsumption Float?
+  isCritical        Boolean              @default(false)
+  requiredGrade     String?
+  allocations       AllocationEntry[]
+
+  @@map("operations")
+}
+
+model Worker {
+  id          String            @id @default(uuid())
+  empNo       String            @unique
+  name        String
+  dateOfJoin  DateTime
+  grade       String
+  currentLine String?
+  isActive    Boolean           @default(true)
+  skills      WorkerSkill[]
+  allocations AllocationEntry[]
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@map("workers")
+}
+
+model WorkerSkill {
+  id            String    @id @default(uuid())
+  workerId      String
+  worker        Worker    @relation(fields: [workerId], references: [id], onDelete: Cascade)
+  operationName String
+  efficiency    Float
+  lastAssessed  DateTime?
+
+  @@unique([workerId, operationName])
+  @@map("worker_skills")
+}
+
+model AllocationPlan {
+  id             String               @id @default(uuid())
+  lineId         String
+  obId           String
+  ob             OperationalBreakdown @relation(fields: [obId], references: [id])
+  changeoverDate DateTime
+  status         String               @default("DRAFT")
+  createdBy      String
+  entries        AllocationEntry[]
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  @@map("allocation_plans")
+}
+
+model AllocationEntry {
+  id               String         @id @default(uuid())
+  planId           String
+  plan             AllocationPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  operationId      String
+  operation        Operation      @relation(fields: [operationId], references: [id])
+  workerId         String?
+  worker           Worker?        @relation(fields: [workerId], references: [id])
+  matchScore       Float?
+  isManualOverride Boolean        @default(false)
+  notes            String?
+
+  @@map("allocation_entries")
+}
+
+model Machine {
+  id                  String            @id @default(uuid())
+  machineCode         String            @unique
+  machineType         String
+  brand               String?
+  currentLine         String
+  workstationNo       Int?
+  condition           String            @default("RUNNING")
+  lastMaintenanceDate DateTime?
+  nextMaintenanceDue  DateTime?
+  attachments         String            @default("[]")
+  notes               String?
+  transfers           MachineTransfer[]
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@map("machines")
+}
+
+model MachineTransfer {
+  id        String   @id @default(uuid())
+  machineId String
+  machine   Machine  @relation(fields: [machineId], references: [id])
+  fromLine  String
+  toLine    String
+  date      DateTime
+  reason    String?
+  movedBy   String?
+  createdAt DateTime @default(now())
+
+  @@map("machine_transfers")
+}
+
+model Checklist {
+  id               String                @id @default(uuid())
+  lineId           String
+  buyer            String
+  styleNumber      String
+  description      String
+  factoryLine      String
+  fileHandoverDate DateTime
+  changeoverDate   DateTime
+  obId             String?
+  ob               OperationalBreakdown? @relation(fields: [obId], references: [id])
+  status           String                @default("NOT_STARTED")
+  items            ChecklistItem[]
+  wipEntries       WipEntry[]
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+
+  @@map("checklists")
+}
+
+model ChecklistItem {
+  id          String    @id @default(uuid())
+  checklistId String
+  checklist   Checklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+  section     String
+  activity    String
+  responsible String
+  daysBefore  Int?
+  dueDate     DateTime?
+  actualDate  DateTime?
+  status      String    @default("PENDING")
+  remarks     String?
+
+  @@map("checklist_items")
+}
+
+model WipEntry {
+  id            String    @id @default(uuid())
+  checklistId   String
+  checklist     Checklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+  section       String
+  prevStyleLast Int?
+  newStyleFirst Int?
+  cotTarget     Int?
+  peakTargetHrs Float?
+  remarks       String?
+
+  @@map("wip_entries")
+}

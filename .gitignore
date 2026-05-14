@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Database (SQLite local file — committed as empty db)
+server/prisma/dev.db
+server/prisma/dev.db-journal
+server/prisma/dev.db-shm
+server/prisma/dev.db-wal
+
+# Environment
+server/.env
+
+# Build output
+client/dist/
+client/.vite/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Prisma generated
+server/node_modules/.prisma/

@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --navy: #1E293B;
+    --teal: #0D9488;
+    --amber: #F59E0B;
+    --red: #EF4444;
+    --bg: #F8FAFC;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Inter', 'DM Sans', system-ui, sans-serif;
+    background-color: #F8FAFC;
+    color: #1E293B;
+    -webkit-font-smoothing: antialiased;
+  }
+  .font-mono { font-family: 'JetBrains Mono', 'Fira Code', monospace; }
+}
+
+@layer components {
+  .stat-card {
+    @apply bg-white rounded-lg border border-slate-200 p-4 shadow-card;
+  }
+  .data-table thead th {
+    @apply bg-slate-50 text-slate-600 text-xs font-semibold uppercase tracking-wide px-4 py-3 text-left border-b border-slate-200;
+  }
+  .data-table tbody tr {
+    @apply border-b border-slate-100 hover:bg-slate-50 transition-colors;
+  }
+  .data-table tbody td {
+    @apply px-4 py-3 text-sm text-slate-700;
+  }
+  .badge-green  { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200; }
+  .badge-amber  { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200; }
+  .badge-red    { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-red-50 text-red-700 border border-red-200; }
+  .badge-blue   { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200; }
+  .badge-slate  { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200; }
+}
+
+/* Print styles */
+@media print {
+  .no-print { display: none !important; }
+  .print-only { display: block !important; }
+  body { background: white; }
+  .print-container { max-width: none; padding: 0; }
+}
+.print-only { display: none; }
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+/* Skeleton loader */
+.skeleton {
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
