@@ -13,7 +13,7 @@ router.get('/', async (req, res) => {
         ...(line ? { currentLine: line } : {}),
         ...(type ? { machineType: type } : {}),
         ...(condition ? { condition } : {}),
-        ...(search ? { OR: [{ machineCode: { contains: search, mode: 'default' } }, { brand: { contains: search, mode: 'default' } }] } : {}),
+        ...(search ? { OR: [{ machineCode: { contains: search, mode: 'insensitive' } }, { brand: { contains: search, mode: 'insensitive' } }] } : {}),
       },
       orderBy: [{ currentLine: 'asc' }, { machineType: 'asc' }, { workstationNo: 'asc' }],
     })

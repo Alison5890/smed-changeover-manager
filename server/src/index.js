@@ -12,8 +12,12 @@ const dashboardRoutes = require('./routes/dashboard')
 
 const app = express()
 const PORT = process.env.PORT || 5000
+const isProd = process.env.NODE_ENV === 'production'
 
-app.use(cors({ origin: 'http://localhost:3000', credentials: true }))
+app.use(cors({
+  origin: isProd ? true : 'http://localhost:3000',
+  credentials: true,
+}))
 app.use(express.json({ limit: '50mb' }))
 app.use(express.urlencoded({ extended: true, limit: '50mb' }))
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')))
@@ -26,6 +30,13 @@ app.use('/api/checklists', checklistRoutes)
 app.use('/api/dashboard', dashboardRoutes)
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }))
+
+// Serve React build in production
+if (isProd) {
+  const clientDist = path.join(__dirname, '..', '..', 'client', 'dist')
+  app.use(express.static(clientDist))
+  app.get('*', (req, res) => res.sendFile(path.join(clientDist, 'index.html')))
+}
 
 app.use((err, req, res, next) => {
   console.error(err.stack)

@@ -13,7 +13,7 @@ router.get('/', async (req, res) => {
     const { search, buyer } = req.query
     const obs = await prisma.operationalBreakdown.findMany({
       where: {
-        ...(search ? { OR: [{ styleName: { contains: search, mode: 'default' } }, { styleNumber: { contains: search, mode: 'default' } }] } : {}),
+        ...(search ? { OR: [{ styleName: { contains: search, mode: 'insensitive' } }, { styleNumber: { contains: search, mode: 'insensitive' } }] } : {}),
         ...(buyer ? { buyer } : {}),
       },
       orderBy: { createdAt: 'desc' },

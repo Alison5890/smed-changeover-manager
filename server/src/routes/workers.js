@@ -16,7 +16,7 @@ router.get('/', async (req, res) => {
         isActive: active === 'false' ? false : true,
         ...(line ? { currentLine: line } : {}),
         ...(grade ? { grade } : {}),
-        ...(search ? { OR: [{ name: { contains: search, mode: 'default' } }, { empNo: { contains: search } }] } : {}),
+        ...(search ? { OR: [{ name: { contains: search, mode: 'insensitive' } }, { empNo: { contains: search, mode: 'insensitive' } }] } : {}),
       },
       include: { skills: true },
       orderBy: [{ currentLine: 'asc' }, { grade: 'asc' }, { name: 'asc' }],
