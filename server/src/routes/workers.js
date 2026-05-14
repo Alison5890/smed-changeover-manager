@@ -78,22 +78,24 @@ router.post('/:id/skills', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }) }
 })
 
-// GET skill matrix for a line (for heatmap)
+// GET skill matrix for a line or all lines (for heatmap)
 router.get('/matrix/:lineId', async (req, res) => {
   try {
+    const isAll = req.params.lineId === 'ALL'
     const workers = await prisma.worker.findMany({
-      where: { currentLine: req.params.lineId, isActive: true },
+      where: { ...(isAll ? {} : { currentLine: req.params.lineId }), isActive: true },
       include: { skills: true },
-      orderBy: { name: 'asc' },
+      orderBy: isAll ? [{ currentLine: 'asc' }, { name: 'asc' }] : [{ name: 'asc' }],
     })
 
-    // Collect all unique operations across this line
+    // Collect all unique operations
     const opSet = new Set()
     workers.forEach(w => w.skills.forEach(s => opSet.add(s.operationName)))
     const operations = [...opSet].sort()
 
     const matrix = workers.map(w => ({
       id: w.id, empNo: w.empNo, name: w.name, grade: w.grade,
+      currentLine: w.currentLine,
       skills: Object.fromEntries(w.skills.map(s => [s.operationName, s.efficiency])),
     }))
 
