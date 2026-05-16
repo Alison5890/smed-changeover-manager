@@ -26,3 +26,6 @@ Thumbs.db
 
 # Prisma generated
 server/node_modules/.prisma/
+
+# Claude Code local
+.claude/

@@ -1,8 +1,24 @@
 const { PrismaClient } = require('@prisma/client')
+const bcrypt = require('bcryptjs')
 const prisma = new PrismaClient()
 
 async function main() {
   console.log('Seeding database...')
+
+  // ─── Default users ──────────────────────────────────────────────────────────
+  const defaultUsers = [
+    { name: 'Admin User',      email: 'admin@arvind.com',      password: 'admin123',    role: 'ADMIN' },
+    { name: 'IE Engineer',     email: 'ie@arvind.com',         password: 'ie123',       role: 'IE' },
+    { name: 'Line Supervisor', email: 'supervisor@arvind.com', password: 'super123',    role: 'SUPERVISOR' },
+    { name: 'Maintenance',     email: 'maintenance@arvind.com',password: 'maint123',    role: 'MAINTENANCE' },
+  ]
+  for (const u of defaultUsers) {
+    await prisma.user.upsert({
+      where: { email: u.email },
+      update: {},
+      create: { ...u, password: await bcrypt.hash(u.password, 10) },
+    })
+  }
 
   // ─── OB 1: Henley T-Shirt (21 ops) ────────────────────────────────────────
   const henley = await prisma.operationalBreakdown.create({
@@ -10,31 +26,104 @@ async function main() {
       styleName: 'Henley Short Sleeve',
       buyer: 'GAP',
       styleNumber: 'D93965-907038-855322',
+      itemNo: '855322', description: 'Henley Short Sleeve T-Shirt',
+      fabric: 'Single Jersey', division: 'KNITS', lineNo: 'E1',
+      taktTimeSec: 28, output60: 1080, output100: 1800,
       totalOperations: 21,
       totalSAM: 8.867,
       operations: {
         create: [
-          { slNo: 1,  description: 'WCL PREPARE & ATTACH',            machineType: 'SNLS',     baseSAM: 0.28, allowancePercent: 15, totalSAM: 0.322, threadConsumption: 0.20, isCritical: false },
-          { slNo: 2,  description: 'NECK RIB PREPARE',                machineType: 'SNLS',     baseSAM: 0.30, allowancePercent: 15, totalSAM: 0.345, threadConsumption: 0.25, isCritical: false },
-          { slNo: 3,  description: 'NECK RIB STAY STITCH',            machineType: 'F/L(2T)',  baseSAM: 0.32, allowancePercent: 15, totalSAM: 0.368, threadConsumption: 0.90, isCritical: false },
-          { slNo: 4,  description: 'KNIT PLACKET PREPARE',            machineType: 'SNLS',     baseSAM: 0.45, allowancePercent: 15, totalSAM: 0.517, threadConsumption: 0.40, isCritical: false },
-          { slNo: 5,  description: 'KNIT PLACKET MARK & SLASH FRONT', machineType: 'HAND',     baseSAM: 0.50, allowancePercent: 15, totalSAM: 0.575, threadConsumption: 0.00, isCritical: false },
-          { slNo: 6,  description: 'KNIT PLACKET ATTACH',             machineType: 'SNLS',     baseSAM: 0.65, allowancePercent: 15, totalSAM: 0.747, threadConsumption: 0.55, isCritical: true,  requiredGrade: 'A' },
-          { slNo: 7,  description: 'KNIT PLACKET TOP STITCH',         machineType: 'SNLS',     baseSAM: 0.40, allowancePercent: 15, totalSAM: 0.460, threadConsumption: 0.45, isCritical: false },
-          { slNo: 8,  description: 'BUTTON HOLE ON PLACKET',          machineType: 'BH',       baseSAM: 0.25, allowancePercent: 15, totalSAM: 0.287, threadConsumption: 0.09, isCritical: false },
-          { slNo: 9,  description: 'BUTTON ATTACH ON PLACKET',        machineType: 'BT',       baseSAM: 0.28, allowancePercent: 15, totalSAM: 0.322, threadConsumption: 0.05, isCritical: false },
-          { slNo: 10, description: 'SHOULDER ATTACH',                 machineType: '4TH O/L',  baseSAM: 0.45, allowancePercent: 15, totalSAM: 0.517, threadConsumption: 1.54, isCritical: true,  requiredGrade: 'A' },
-          { slNo: 11, description: 'NECK RIB ATTACH',                 machineType: '4TH O/L',  baseSAM: 0.50, allowancePercent: 15, totalSAM: 0.575, threadConsumption: 1.68, isCritical: true,  requiredGrade: 'A' },
-          { slNo: 12, description: 'BACK NECK BINDING ATTACH',        machineType: 'F/L(2T)',  baseSAM: 0.35, allowancePercent: 15, totalSAM: 0.402, threadConsumption: 0.60, isCritical: false },
-          { slNo: 13, description: 'MAIN LABEL ATTACH / HEAT SEAL',   machineType: 'HT',       baseSAM: 0.20, allowancePercent: 15, totalSAM: 0.230, threadConsumption: 0.00, isCritical: false },
-          { slNo: 14, description: 'NECK TOP STITCH',                 machineType: 'F/L(2T)',  baseSAM: 0.35, allowancePercent: 15, totalSAM: 0.402, threadConsumption: 0.75, isCritical: false },
-          { slNo: 15, description: 'TACK & FINISH BACK NECK BINDING', machineType: 'SNLS',     baseSAM: 0.25, allowancePercent: 15, totalSAM: 0.287, threadConsumption: 0.18, isCritical: false },
-          { slNo: 16, description: 'SLEEVE ATTACH',                   machineType: '4TH O/L',  baseSAM: 0.50, allowancePercent: 15, totalSAM: 0.575, threadConsumption: 1.96, isCritical: true,  requiredGrade: 'A' },
-          { slNo: 17, description: 'SIDE ATTACH',                     machineType: '4TH O/L',  baseSAM: 0.50, allowancePercent: 15, totalSAM: 0.575, threadConsumption: 2.10, isCritical: true,  requiredGrade: 'A' },
-          { slNo: 18, description: 'SLEEVE HEM',                      machineType: 'F/L(3T)',  baseSAM: 0.38, allowancePercent: 15, totalSAM: 0.437, threadConsumption: 1.43, isCritical: false },
-          { slNo: 19, description: 'BOTTOM HEM',                      machineType: 'F/L(3T)',  baseSAM: 0.40, allowancePercent: 15, totalSAM: 0.460, threadConsumption: 1.73, isCritical: false },
-          { slNo: 20, description: 'SLEEVE & BOTTOM TACK',            machineType: 'SNLS',     baseSAM: 0.22, allowancePercent: 15, totalSAM: 0.253, threadConsumption: 0.18, isCritical: false },
-          { slNo: 21, description: 'PLACKET BAR TACK',                machineType: 'BT',       baseSAM: 0.18, allowancePercent: 15, totalSAM: 0.207, threadConsumption: 0.05, isCritical: false },
+          { slNo: 1,  section: 'FRONT',    description: 'WCL PREPARE & ATTACH',            machineType: 'SNLS',     baseSAM: 0.28, allowancePercent: 15, totalSAM: 0.322, threadConsumption: 0.20, isCritical: false },
+          { slNo: 2,  section: 'COLLAR',   description: 'NECK RIB PREPARE',                machineType: 'SNLS',     baseSAM: 0.30, allowancePercent: 15, totalSAM: 0.345, threadConsumption: 0.25, isCritical: false },
+          { slNo: 3,  section: 'COLLAR',   description: 'NECK RIB STAY STITCH',            machineType: 'F/L(2T)',  baseSAM: 0.32, allowancePercent: 15, totalSAM: 0.368, threadConsumption: 0.90, isCritical: false },
+          { slNo: 4,  section: 'FRONT',    description: 'KNIT PLACKET PREPARE',            machineType: 'SNLS',     baseSAM: 0.45, allowancePercent: 15, totalSAM: 0.517, threadConsumption: 0.40, isCritical: false },
+          { slNo: 5,  section: 'FRONT',    description: 'KNIT PLACKET MARK & SLASH FRONT', machineType: 'HAND',     baseSAM: 0.50, allowancePercent: 15, totalSAM: 0.575, threadConsumption: 0.00, isCritical: false },
+          { slNo: 6,  section: 'FRONT',    description: 'KNIT PLACKET ATTACH',             machineType: 'SNLS',     baseSAM: 0.65, allowancePercent: 15, totalSAM: 0.747, threadConsumption: 0.55, isCritical: true,  requiredGrade: 'A',  criticalPoints: 'Box pleat alignment' },
+          { slNo: 7,  section: 'FRONT',    description: 'KNIT PLACKET TOP STITCH',         machineType: 'SNLS',     baseSAM: 0.40, allowancePercent: 15, totalSAM: 0.460, threadConsumption: 0.45, isCritical: false },
+          { slNo: 8,  section: 'FRONT',    description: 'BUTTON HOLE ON PLACKET',          machineType: 'BH',       baseSAM: 0.25, allowancePercent: 15, totalSAM: 0.287, threadConsumption: 0.09, isCritical: false },
+          { slNo: 9,  section: 'FRONT',    description: 'BUTTON ATTACH ON PLACKET',        machineType: 'BT',       baseSAM: 0.28, allowancePercent: 15, totalSAM: 0.322, threadConsumption: 0.05, isCritical: false },
+          { slNo: 10, section: 'ASSEMBLY', description: 'SHOULDER ATTACH',                 machineType: '4TH O/L',  baseSAM: 0.45, allowancePercent: 15, totalSAM: 0.517, threadConsumption: 1.54, isCritical: true,  requiredGrade: 'A',  criticalPoints: 'Seam balance both shoulders' },
+          { slNo: 11, section: 'COLLAR',   description: 'NECK RIB ATTACH',                 machineType: '4TH O/L',  baseSAM: 0.50, allowancePercent: 15, totalSAM: 0.575, threadConsumption: 1.68, isCritical: true,  requiredGrade: 'A',  criticalPoints: 'Stretch ratio 1:1.15' },
+          { slNo: 12, section: 'COLLAR',   description: 'BACK NECK BINDING ATTACH',        machineType: 'F/L(2T)',  baseSAM: 0.35, allowancePercent: 15, totalSAM: 0.402, threadConsumption: 0.60, isCritical: false },
+          { slNo: 13, section: 'COLLAR',   description: 'MAIN LABEL ATTACH / HEAT SEAL',   machineType: 'HT',       baseSAM: 0.20, allowancePercent: 15, totalSAM: 0.230, threadConsumption: 0.00, isCritical: false },
+          { slNo: 14, section: 'COLLAR',   description: 'NECK TOP STITCH',                 machineType: 'F/L(2T)',  baseSAM: 0.35, allowancePercent: 15, totalSAM: 0.402, threadConsumption: 0.75, isCritical: false },
+          { slNo: 15, section: 'COLLAR',   description: 'TACK & FINISH BACK NECK BINDING', machineType: 'SNLS',     baseSAM: 0.25, allowancePercent: 15, totalSAM: 0.287, threadConsumption: 0.18, isCritical: false },
+          { slNo: 16, section: 'ASSEMBLY', description: 'SLEEVE ATTACH',                   machineType: '4TH O/L',  baseSAM: 0.50, allowancePercent: 15, totalSAM: 0.575, threadConsumption: 1.96, isCritical: true,  requiredGrade: 'A',  criticalPoints: 'Notch match at armhole' },
+          { slNo: 17, section: 'ASSEMBLY', description: 'SIDE ATTACH',                     machineType: '4TH O/L',  baseSAM: 0.50, allowancePercent: 15, totalSAM: 0.575, threadConsumption: 2.10, isCritical: true,  requiredGrade: 'A',  criticalPoints: 'Hem alignment' },
+          { slNo: 18, section: 'SLEEVE',   description: 'SLEEVE HEM',                      machineType: 'F/L(3T)',  baseSAM: 0.38, allowancePercent: 15, totalSAM: 0.437, threadConsumption: 1.43, isCritical: false },
+          { slNo: 19, section: 'ASSEMBLY', description: 'BOTTOM HEM',                      machineType: 'F/L(3T)',  baseSAM: 0.40, allowancePercent: 15, totalSAM: 0.460, threadConsumption: 1.73, isCritical: false },
+          { slNo: 20, section: 'ASSEMBLY', description: 'SLEEVE & BOTTOM TACK',            machineType: 'SNLS',     baseSAM: 0.22, allowancePercent: 15, totalSAM: 0.253, threadConsumption: 0.18, isCritical: false },
+          { slNo: 21, section: 'FRONT',    description: 'PLACKET BAR TACK',                machineType: 'BT',       baseSAM: 0.18, allowancePercent: 15, totalSAM: 0.207, threadConsumption: 0.05, isCritical: false },
+        ],
+      },
+    },
+  })
+
+  // ─── OB 4: Relaxed Boxy Button Down (TDS format demo) ─────────────────────
+  const boxyShirt = await prisma.operationalBreakdown.create({
+    data: {
+      styleName: 'Relaxed Boxy Button Down — Cowboy Blue',
+      buyer: 'GAP',
+      styleNumber: 'D77466/886719',
+      description: 'RELAXED BOXY BUTTON DOWN -COWBOY BLUE',
+      fabric: 'Denim',
+      division: 'SHIRT',
+      lineNo: '4',
+      orderQty: 3600,
+      taktTimeSec: 26,
+      output60: 1100, output100: 1461, outputPerHr: 138,
+      minPerDay: 480, pcsPerMC: 13.6,
+      machineWS: 2.0, nonMachineWS: 6.0, totalWS: 81,
+      machineTimePct: 91.2,
+      totalOperations: 54,
+      totalSAM: 27.72,
+      totalManualSAM: 2.45,
+      operations: {
+        create: [
+          { slNo: 1,  section: 'FRONT',       description: 'FUSING CREASE B/H PRESS',    machineType: 'IRON',          baseSAM: 0.60, allowancePercent: 0, totalSAM: 0.60, noOfMcCalculation: 1.5, workstationsNo: 2, perHr: 80,  perDay: 640, isCritical: false },
+          { slNo: 2,  section: 'FRONT',       description: 'PRESS B/H PLKT',             machineType: 'SNLS-UBT',      baseSAM: 0.45, allowancePercent: 0, totalSAM: 0.45, noOfMcCalculation: 1.0, workstationsNo: 1, perHr: 125, perDay: 1000, needle: '(DBX1) 14', thread: 'TEX-60', spi: 10, isCritical: false },
+          { slNo: 3,  section: 'FRONT',       description: 'B/H PLACKET HEM',            machineType: 'SNLS-UBT',      baseSAM: 0.35, manualSAM: 0.25, allowancePercent: 0, totalSAM: 0.60, noOfMcCalculation: 0.8, workstationsNo: 1, perHr: 125, perDay: 1000, thread: 'TEX-60', spi: 10, isCritical: false },
+          { slNo: 4,  section: 'FRONT',       description: 'B/H PLACKET ES',             machineType: 'SNLS-UBT',      baseSAM: 0.35, allowancePercent: 0, totalSAM: 0.35, machineLimitationOnUT: 'Y', noOfMcCalculation: 0.8, workstationsNo: 1, perHr: 125, perDay: 1000, needle: '(DBX1) 14', thread: 'TEX 60', spi: 10, presserFoot: 'CL 1/32', feedDog: 'Metal', spm: 3000, spring: 'MEDIUM DUTY', needlePlate: 'STD', isCritical: false },
+          { slNo: 5,  section: 'FRONT',       description: 'FRT PKT CREASE',             machineType: 'IRON',          baseSAM: 0.50, allowancePercent: 0, totalSAM: 0.50, noOfMcCalculation: 1.5, workstationsNo: 2, perHr: 75,  perDay: 600, isCritical: false },
+          { slNo: 6,  section: 'FRONT',       description: 'FRT PKT HEM',                machineType: 'SNLS-UBT',      baseSAM: 0.40, allowancePercent: 0, totalSAM: 0.40, noOfMcCalculation: 0.5, workstationsNo: 1, perHr: 125, perDay: 1000, thread: 'TEX 60', spi: 10, isCritical: false },
+          { slNo: 7,  section: 'FRONT',       description: 'PKT ATTACHING MARKING',      machineType: 'TABLE',         baseSAM: 0,    manualSAM: 0.40, allowancePercent: 0, totalSAM: 0.40, noOfMcCalculation: 0.5, workstationsNo: 1, isCritical: false },
+          { slNo: 8,  section: 'FRONT',       description: 'FRT PKT ATTACHING',          machineType: 'SNLS-UBT',      baseSAM: 0.65, allowancePercent: 0, totalSAM: 0.65, noOfMcCalculation: 1.5, workstationsNo: 2, thread: 'TEX 60', spi: 10, isCritical: false },
+          { slNo: 9,  section: 'FRONT',       description: 'IN LINE CHECKING',           machineType: 'C TABLE',       baseSAM: 0,    allowancePercent: 0, totalSAM: 0, isCritical: false },
+          { slNo: 10, section: 'FRONT',       description: 'FRT BH',                     machineType: 'BUTTON HOLE M/C', baseSAM: 0.90, allowancePercent: 0, totalSAM: 0.90, uncutThreadSources: 'SELF TRIM & CHECK', machineLimitationOnUT: 'Y', noOfMcCalculation: 2.1, workstationsNo: 2, perHr: 125, perDay: 1000, needle: '(DPX1) 14', thread: 'TEX 30', presserFoot: 'STD', feedDog: 'Metal', spm: 3200, spring: 'MEDIUM DUTY', needlePlate: 'STD', isCritical: true, criticalPoints: 'BH SPACING & SIZE' },
+          { slNo: 11, section: 'BACK',        description: 'BOX PLEAT READY & TACK@ TOP', machineType: 'SNLS-UBT',     baseSAM: 0.45, allowancePercent: 0, totalSAM: 0.45, uncutThreadSources: 'SELF TRIM & CHECK', machineLimitationOnUT: 'Y', noOfMcCalculation: 0.7, workstationsNo: 1, perHr: 125, perDay: 1000, needle: '(DBX1) 14', thread: 'TEX 30', spi: 10, presserFoot: 'P351', feedDog: 'Teflon', spm: 2750, spring: 'MEDIUM DUTY', needlePlate: 'E-12', isCritical: false },
+          { slNo: 12, section: 'BACK',        description: 'BK YOKE ATTH',               machineType: 'SNLSNF-UBT',    baseSAM: 0.55, allowancePercent: 0, totalSAM: 0.55, uncutThreadSources: 'SELF TRIM & CHECK', machineLimitationOnUT: 'Y', noOfMcCalculation: 1.3, workstationsNo: 2, perHr: 138, perDay: 1100, needle: '(DBX1) 14', thread: 'TEX 30', spi: 10, presserFoot: 'P351', feedDog: 'Metal', spm: 2750, spring: 'MEDIUM DUTY', needlePlate: 'E-12', isCritical: true, criticalPoints: 'YOKE BALANCE LEFT/RIGHT', requiredGrade: 'A' },
+          { slNo: 13, section: 'BACK',        description: 'BK YOKE ATTH TOP ST',        machineType: 'SNLS-UBT',      baseSAM: 0.50, allowancePercent: 0, totalSAM: 0.50, uncutThreadSources: 'SELF TRIM & CHECK', machineLimitationOnUT: 'Y', noOfMcCalculation: 0.7, workstationsNo: 1, perHr: 125, perDay: 1000, needle: '(DBX1) 10', thread: 'TEX 60', spi: 10, presserFoot: 'CL 1/4"', feedDog: 'Metal', spm: 2750, spring: 'MEDIUM DUTY', needlePlate: 'E-12', isCritical: false },
+          { slNo: 14, section: 'BACK',        description: 'WASH CARE LABEL ATTACH',     machineType: 'SNLS-UBT',      baseSAM: 0.35, allowancePercent: 0, totalSAM: 0.35, uncutThreadSources: 'SELF TRIM & CHECK', noOfMcCalculation: 0.7, workstationsNo: 2, perHr: 138, perDay: 1100, needle: '(UYX113) 14', thread: 'TEX 30', spi: 12, presserFoot: 'P351', feedDog: 'Teflon', spm: 2750, spring: 'MEDIUM DUTY', needlePlate: 'STD', isCritical: false },
+          { slNo: 15, section: 'SLEEVE',      description: 'SLV LOWER PLKT ATT',         machineType: 'SNLS-UBT',      baseSAM: 0.45, allowancePercent: 0, totalSAM: 0.45, uncutThreadSources: 'SELF TRIM & CHECK', machineLimitationOnUT: 'Y', noOfMcCalculation: 1.0, workstationsNo: 2, perHr: 67, perDay: 533, needle: '(DBX1) 14', thread: 'TEX-60', spi: 10, presserFoot: 'FOLDER', spm: 2750, isCritical: false },
+          { slNo: 16, section: 'SLEEVE',      description: 'SLV LOWER PLKT TACKING',     machineType: 'SNLS-UBT',      baseSAM: 0.30, allowancePercent: 0, totalSAM: 0.30, uncutThreadSources: 'SELF TRIM & CHECK', noOfMcCalculation: 0.5, workstationsNo: 1, perHr: 125, perDay: 1000, thread: 'TEX-30', spi: 10, spm: 2750, isCritical: false },
+          { slNo: 17, section: 'SLEEVE',      description: 'SLV UPPER PLACKET CREASE',   machineType: 'IRON',          baseSAM: 0.50, allowancePercent: 0, totalSAM: 0.50, workstationsNo: 2, perHr: 126, perDay: 1010, isCritical: false },
+          { slNo: 18, section: 'SLEEVE',      description: 'SLV UPPER PLACKET FINISH',   machineType: 'SNLS-UBT',      baseSAM: 0.75, allowancePercent: 0, totalSAM: 0.75, uncutThreadSources: 'SELF TRIM & CHECK', workstationsNo: 3, perHr: 40, perDay: 320, thread: 'TEX-60', spi: 10, spm: 2750, isCritical: true, criticalPoints: 'PLACKET CORNER FINISH' },
+          { slNo: 19, section: 'SLEEVE',      description: 'IN LINE CHECKING',           machineType: 'C TABLE',       baseSAM: 0, allowancePercent: 0, totalSAM: 0, isCritical: false },
+          { slNo: 20, section: 'COLLAR',      description: 'COLLAR EDGE TRIMM',          machineType: 'SNLSEC',        baseSAM: 0.20, allowancePercent: 0, totalSAM: 0.20, uncutThreadSources: 'SELF TRIM & CHECK', machineLimitationOnUT: 'Y', noOfMcCalculation: 0.5, workstationsNo: 1, perHr: 150, perDay: 1200, needle: '(DBX1) 14', presserFoot: 'CL 1/32"', feedDog: 'Teflon', spm: 3000, spring: 'MEDIUM DUTY', needlePlate: 'STD', isCritical: false },
+          { slNo: 21, section: 'COLLAR',      description: 'NB HEM STITCH',              machineType: 'SNLS-UBT',      baseSAM: 0.25, allowancePercent: 0, totalSAM: 0.25, uncutThreadSources: 'SELF TRIM & CHECK', noOfMcCalculation: 0.6, workstationsNo: 1, perHr: 120, perDay: 960, needle: '(DBX1) 14', thread: 'TEX-60', spi: 10, feedDog: 'Teflon', isCritical: false },
+          { slNo: 22, section: 'COLLAR',      description: 'COLLAR TURN',                machineType: 'COLLAR TURN M/C', baseSAM: 0.35, allowancePercent: 0, totalSAM: 0.35, machineLimitationOnUT: 'Y', workstationsNo: 1, perHr: 86, perDay: 686, isCritical: false },
+          { slNo: 23, section: 'COLLAR',      description: 'COLLAR TOP STITCH',          machineType: 'SNLSNF-UBT',    baseSAM: 0.40, allowancePercent: 0, totalSAM: 0.40, uncutThreadSources: 'SELF TRIM & CHECK', machineLimitationOnUT: 'Y', noOfMcCalculation: 0.4, workstationsNo: 1, perHr: 75, perDay: 600, needle: '(DBX1) 14', thread: 'TEX-60', spi: 10, presserFoot: 'P351', feedDog: 'Teflon', spm: 3000, spring: 'MEDIUM DUTY', needlePlate: 'STD', isCritical: true, criticalPoints: 'TOP STITCH EVENNESS' },
+          { slNo: 24, section: 'COLLAR',      description: 'COLLAR PICK SHAPE READY',    machineType: 'SNLSEC',        baseSAM: 0.91, allowancePercent: 0, totalSAM: 0.91, uncutThreadSources: 'SELF TRIM & CHECK', folderWorkaids: 'profile', noOfMcCalculation: 1.5, workstationsNo: 2, needle: '(DBX1) 14', spi: 10, isCritical: false },
+          { slNo: 25, section: 'CUFF',        description: 'CUFF HEM STTH',              machineType: 'SNLS-UBT',      baseSAM: 0.40, allowancePercent: 0, totalSAM: 0.40, uncutThreadSources: 'SELF TRIM & CHECK', noOfMcCalculation: 1.5, workstationsNo: 2, thread: 'TEX-60', spi: 10, isCritical: false },
+          { slNo: 26, section: 'CUFF',        description: 'CUFF EDGE TRIM',             machineType: 'SNLSEC',        baseSAM: 0.30, allowancePercent: 0, totalSAM: 0.30, noOfMcCalculation: 0.6, workstationsNo: 1, isCritical: false },
+          { slNo: 27, section: 'CUFF',        description: 'CUFF TURN',                  machineType: 'TABLE',         baseSAM: 0, manualSAM: 0.30, allowancePercent: 0, totalSAM: 0.30, noOfMcCalculation: 0.4, workstationsNo: 1, isCritical: false },
+          { slNo: 28, section: 'CUFF',        description: 'CUFF TURN & CREASE',         machineType: 'CUFF TURN M/C', baseSAM: 0, manualSAM: 0.30, allowancePercent: 0, totalSAM: 0.30, noOfMcCalculation: 0.7, workstationsNo: 1, isCritical: false },
+          { slNo: 29, section: 'CUFF',        description: 'CUFF FINISH CREASE',         machineType: 'IRON',          baseSAM: 0.30, allowancePercent: 0, totalSAM: 0.30, noOfMcCalculation: 0.6, workstationsNo: 1, isCritical: false },
+          { slNo: 30, section: 'ASSEMBLY',    description: 'PARTS SETTING',              machineType: 'HELPER TABLE',  baseSAM: 0, manualSAM: 0.50, allowancePercent: 0, totalSAM: 0.50, noOfMcCalculation: 1.1, workstationsNo: 3, perHr: 60, perDay: 480, isCritical: false },
+          { slNo: 31, section: 'ASSEMBLY',    description: 'SHOULDER ATTACH',            machineType: 'SNLS-UBT',      baseSAM: 0.60, allowancePercent: 0, totalSAM: 0.60, uncutThreadSources: 'SELF TRIM & CHECK', machineLimitationOnUT: 'Y', noOfMcCalculation: 1.4, workstationsNo: 2, perHr: 50, perDay: 400, needle: '(DBX1) 14', thread: 'TEX40', spi: 12, presserFoot: 'P351', feedDog: 'Teflon', spm: 2750, spring: 'MEDIUM DUTY', needlePlate: 'E-12', isCritical: true, criticalPoints: 'SHOULDER BALANCE', requiredGrade: 'A' },
+          { slNo: 32, section: 'ASSEMBLY',    description: 'SHOULDER TOP STITCH',        machineType: 'DNLS-UBT',      baseSAM: 0.40, allowancePercent: 0, totalSAM: 0.40, uncutThreadSources: 'SELF TRIM & CHECK', machineLimitationOnUT: 'Y', noOfMcCalculation: 0.9, workstationsNo: 1, perHr: 75, perDay: 600, needle: '(DBX1) 14', thread: 'TEX 60', spi: 10, presserFoot: 'CL 1/4"', feedDog: 'Metal', spm: 3000, spring: 'MEDIUM DUTY', needlePlate: 'E-12', isCritical: false },
+          { slNo: 33, section: 'ASSEMBLY',    description: 'COLLAR ATTACH',              machineType: 'SNLSNF-UBT',    baseSAM: 0.51, allowancePercent: 0, totalSAM: 0.51, uncutThreadSources: 'SELF TRIM & CHECK', machineLimitationOnUT: 'Y', noOfMcCalculation: 1.2, workstationsNo: 2, perHr: 59, perDay: 471, needle: '(DBX1) 14', thread: 'TEX 40', spi: 10, presserFoot: 'P351', feedDog: 'Metal', spm: 3000, spring: 'MEDIUM DUTY', needlePlate: 'STD', isCritical: true, criticalPoints: 'COLLAR ALIGNMENT', requiredGrade: 'A+' },
+          { slNo: 34, section: 'ASSEMBLY',    description: 'SLEEVE ATTACH',              machineType: '5T O/L',        baseSAM: 0.90, allowancePercent: 0, totalSAM: 0.90, uncutThreadSources: 'SELF TRIM & CHECK', machineLimitationOnUT: 'Y', noOfMcCalculation: 2.1, workstationsNo: 3, perHr: 33, perDay: 267, needle: '(DBX1) 14', thread: 'TEX 40', spi: 12, presserFoot: 'STD', feedDog: 'Metal', spm: 3000, spring: 'MEDIUM DUTY', needlePlate: 'E-12', isCritical: true, criticalPoints: 'ARMHOLE BALANCE', requiredGrade: 'A' },
+          { slNo: 35, section: 'ASSEMBLY',    description: 'SIDE SEAM ATTACH',           machineType: 'FOA',           baseSAM: 0.80, allowancePercent: 0, totalSAM: 0.80, uncutThreadSources: 'SELF TRIM & CHECK', folderWorkaids: 'F336 (Pneumatic) 6MM', noOfMcCalculation: 1.8, workstationsNo: 2, perHr: 38, perDay: 300, needle: '(TVX64) 16', thread: 'TEX 60', spi: 10, feedDog: 'Metal', spm: 3000, spring: 'MEDIUM DUTY', needlePlate: 'STD', isCritical: true, criticalPoints: 'SIDE SEAM TWISTING' },
+          { slNo: 36, section: 'ASSEMBLY',    description: 'CUFF ATTACH',                machineType: 'SNLSNF-UBT',    baseSAM: 0.60, allowancePercent: 0, totalSAM: 0.60, uncutThreadSources: 'SELF TRIM & CHECK', machineLimitationOnUT: 'Y', folderWorkaids: 'UMA F205', noOfMcCalculation: 1.4, workstationsNo: 2, perHr: 50, perDay: 400, needle: '(DBX1) 14', thread: 'TEX 60', spi: 10, presserFoot: 'CL 1/32"', feedDog: 'Metal', spm: 3000, spring: 'MEDIUM DUTY', needlePlate: 'STD', isCritical: true, criticalPoints: 'CUFF ATTACHMENT', requiredGrade: 'A' },
+          { slNo: 37, section: 'ASSEMBLY',    description: 'BOTTOM HEM',                 machineType: 'SNLS',          baseSAM: 0.70, allowancePercent: 0, totalSAM: 0.70, noOfMcCalculation: 1.6, workstationsNo: 2, thread: 'TEX-60', spi: 10, isCritical: false },
+          { slNo: 38, section: 'ASSEMBLY',    description: 'BTN HOLE NECK & CUFF SLV',   machineType: 'BUTTON HOLE M/C', baseSAM: 0.63, allowancePercent: 0, totalSAM: 0.63, noOfMcCalculation: 1.4, workstationsNo: 1, perHr: 48, perDay: 381, needle: 'GPX5', thread: 'TEX 30', presserFoot: 'STD', spm: 3200, isCritical: false },
+          { slNo: 39, section: 'ASSEMBLY',    description: 'TRIMMING',                   machineType: 'HELPER TABLE',  baseSAM: 0.30, allowancePercent: 0, totalSAM: 0.30, noOfMcCalculation: 1.4, workstationsNo: 2, isCritical: false },
+          { slNo: 40, section: 'ASSEMBLY',    description: 'END LINE CHECKING',          machineType: 'C TABLE',       baseSAM: 0, allowancePercent: 0, totalSAM: 0, isCritical: false },
+          { slNo: 41, section: 'CENTRALIZED', description: 'COLLAR RUN STITCH',          machineType: 'PS-800',        baseSAM: 0.45, allowancePercent: 0, totalSAM: 0.45, uncutThreadSources: 'SELF TRIM & CHECK', machineLimitationOnUT: 'Y', folderWorkaids: 'PROFILE', noOfMcCalculation: 1.0, workstationsNo: 2, perHr: 67, perDay: 533, needle: '(DBX1) 14', thread: 'TEX 30', spi: 12, feedDog: 'Metal', spm: 3000, spring: 'MEDIUM DUTY', needlePlate: 'STD', isCritical: false },
+          { slNo: 42, section: 'CENTRALIZED', description: 'PATTI ATTACH',               machineType: 'SNLS-UBT',      baseSAM: 3.25, allowancePercent: 0, totalSAM: 3.25, uncutThreadSources: 'SELF TRIM & CHECK', machineLimitationOnUT: 'Y', noOfMcCalculation: 7.4, workstationsNo: 5, perHr: 9, perDay: 74, needle: '(DBX1) 14', thread: 'TEX 30', spi: 12, presserFoot: 'P351', feedDog: 'Teflon', spm: 3000, spring: 'MEDIUM DUTY', needlePlate: 'STD', isCritical: true, criticalPoints: 'PATTI EVEN ATTACH', requiredGrade: 'A+' },
+          { slNo: 43, section: 'AFTER WASH',  description: 'BUTTON ATTACH MARKING',      machineType: 'HELPER TABLE',  baseSAM: 0, manualSAM: 0.50, allowancePercent: 0, totalSAM: 0.50, noOfMcCalculation: 1.1, workstationsNo: 1, perHr: 60, perDay: 480, isCritical: false },
+          { slNo: 44, section: 'AFTER WASH',  description: 'BUTTON ATTACHING',           machineType: 'BUTTON ATTACH M/C', baseSAM: 0.60, allowancePercent: 0, totalSAM: 0.60, uncutThreadSources: 'SELF TRIM & CHECK', machineLimitationOnUT: 'Y', noOfMcCalculation: 1.4, workstationsNo: 2, perHr: 100, perDay: 800, needle: 'GPX17', thread: 'TEX 30', presserFoot: 'STD', isCritical: false },
         ],
       },
     },
@@ -317,7 +406,7 @@ async function main() {
   await prisma.allocationEntry.createMany({ data: entries })
 
   console.log('✅ Seed complete:')
-  console.log(`   3 OBs (${henley.styleNumber}, ${roundNeck.styleNumber}, ${crewNeck.styleNumber})`)
+  console.log(`   4 OBs (${henley.styleNumber}, ${roundNeck.styleNumber}, ${crewNeck.styleNumber}, ${boxyShirt.styleNumber})`)
   console.log(`   ${workers.length} workers across E1–E5`)
   console.log(`   ${machineData.length} machines across 5 lines`)
   console.log(`   1 checklist (E2 changeover in 3 days)`)

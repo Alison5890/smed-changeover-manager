@@ -12,8 +12,25 @@ model OperationalBreakdown {
   styleName       String
   buyer           String
   styleNumber     String
+  itemNo          String?
+  orderQty        Int?
+  description     String?
+  fabric          String?
+  division        String?
+  lineNo          String?
+  taktTimeSec     Float?
+  output60        Float?
+  output100       Float?
+  outputPerHr     Float?
+  minPerDay       Int?
+  pcsPerMC        Float?
+  machineWS       Float?
+  nonMachineWS    Float?
+  totalWS         Float?
+  machineTimePct  Float?
   totalOperations Int              @default(0)
   totalSAM        Float            @default(0)
+  totalManualSAM  Float?
   operations      Operation[]
   allocationPlans AllocationPlan[]
   checklists      Checklist[]
@@ -24,19 +41,40 @@ model OperationalBreakdown {
 }
 
 model Operation {
-  id                String               @id @default(uuid())
-  obId              String
-  ob                OperationalBreakdown @relation(fields: [obId], references: [id], onDelete: Cascade)
-  slNo              Int
-  description       String
-  machineType       String
-  baseSAM           Float
-  allowancePercent  Float                @default(15)
-  totalSAM          Float
-  threadConsumption Float?
-  isCritical        Boolean              @default(false)
-  requiredGrade     String?
-  allocations       AllocationEntry[]
+  id                    String               @id @default(uuid())
+  obId                  String
+  ob                    OperationalBreakdown @relation(fields: [obId], references: [id], onDelete: Cascade)
+  slNo                  Int
+  section               String?
+  description           String
+  machineType           String
+  baseSAM               Float
+  manualSAM             Float?
+  allowancePercent      Float                @default(15)
+  totalSAM              Float
+  uncutThreadSources    String?
+  machineLimitationOnUT String?
+  folderWorkaids        String?
+  noOfMcCalculation     Float?
+  workstationsNo        Float?
+  perHr                 Float?
+  targetAt70            Float?
+  perDay                Float?
+  needle                String?
+  thread                String?
+  threadConsumption     Float?
+  spi                   Float?
+  presserFoot           String?
+  feedDog               String?
+  spm                   Float?
+  spring                String?
+  needlePlate           String?
+  model                 String?
+  criticalPoints        String?
+  remarks               String?
+  isCritical            Boolean              @default(false)
+  requiredGrade         String?
+  allocations           AllocationEntry[]
 
   @@map("operations")
 }
@@ -97,6 +135,19 @@ model AllocationEntry {
   notes            String?
 
   @@map("allocation_entries")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("SUPERVISOR")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
 }
 
 model Machine {

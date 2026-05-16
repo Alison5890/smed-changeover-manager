@@ -1,12 +1,30 @@
 const BASE = '/api'
+const TOKEN_KEY = 'smed_auth_token'
+
+export const tokenStore = {
+  get: () => localStorage.getItem(TOKEN_KEY),
+  set: t => localStorage.setItem(TOKEN_KEY, t),
+  clear: () => localStorage.removeItem(TOKEN_KEY),
+}
 
 async function req(method, path, body, isFormData = false) {
+  const token = tokenStore.get()
+  const headers = {
+    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  }
   const opts = {
     method,
-    headers: isFormData ? {} : { 'Content-Type': 'application/json' },
+    headers,
     ...(body ? { body: isFormData ? body : JSON.stringify(body) } : {}),
   }
   const res = await fetch(`${BASE}${path}`, opts)
+  if (res.status === 401) {
+    tokenStore.clear()
+    // Soft redirect so React Router picks it up
+    if (!location.pathname.startsWith('/login')) location.href = '/login'
+    throw new Error('Session expired — please log in again')
+  }
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }))
     throw new Error(err.error || `HTTP ${res.status}`)
@@ -15,6 +33,14 @@ async function req(method, path, body, isFormData = false) {
 }
 
 export const api = {
+  // Auth
+  login: (email, password) => req('POST', '/auth/login', { email, password }),
+  me: () => req('GET', '/auth/me'),
+  getUsers: () => req('GET', '/auth/users'),
+  createUser: data => req('POST', '/auth/users', data),
+  updateUser: (id, data) => req('PUT', `/auth/users/${id}`, data),
+  deleteUser: id => req('DELETE', `/auth/users/${id}`),
+
   // OB
   getOBs: (params = {}) => req('GET', `/ob?${new URLSearchParams(params)}`),
   getOB: id => req('GET', `/ob/${id}`),
