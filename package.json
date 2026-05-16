@@ -10,8 +10,8 @@
     "db:migrate": "npm run migrate --prefix server",
     "db:seed": "npm run seed --prefix server",
     "db:reset": "npm run db:reset --prefix server",
-    "build": "npm --prefix client install && npm --prefix client run build && npm --prefix server install && npm --prefix server run generate",
-    "start": "NODE_ENV=production node server/scripts/startProd.js"
+    "build": "npm --prefix client install --include=dev && npm --prefix client run build && npm --prefix server install --include=dev && npm --prefix server run generate",
+    "start": "node server/scripts/startProd.js"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
