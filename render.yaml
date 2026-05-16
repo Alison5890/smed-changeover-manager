@@ -1,3 +1,10 @@
+databases:
+  - name: smed-db
+    plan: free
+    region: singapore
+    databaseName: smed
+    postgresMajorVersion: 16
+
 services:
   - type: web
     name: smed-changeover-manager
@@ -11,4 +18,8 @@ services:
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
-        sync: false
+        fromDatabase:
+          name: smed-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
