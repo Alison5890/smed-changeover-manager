@@ -1,6 +1,6 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useMemo } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Printer, ChevronRight, CheckCircle2, Clock, AlertCircle, Circle } from 'lucide-react'
+import { Plus, Printer, ChevronRight, CheckCircle2, Clock, AlertCircle, Circle, Calendar, AlertTriangle } from 'lucide-react'
 import { useReactToPrint } from 'react-to-print'
 import { api } from '@/api/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -243,6 +243,111 @@ function NewChecklistDialog({ open, onClose }) {
   )
 }
 
+function UpcomingPanel({ checklists, plans, onOpen }) {
+  // Merge checklists + allocation plans into a single timeline keyed by lineId+date
+  const items = useMemo(() => {
+    const now = new Date()
+    const cutoff = new Date(now.getTime() + 21 * 86400000)
+    const byKey = new Map()
+
+    for (const cl of checklists) {
+      const d = new Date(cl.changeoverDate)
+      if (d < new Date(now.toDateString()) || d > cutoff) continue
+      if (cl.status === 'COMPLETED') continue
+      const key = `${cl.lineId}|${d.toISOString().slice(0, 10)}`
+      const items = cl.items || []
+      const done = items.filter(i => i.status === 'DONE' || i.status === 'NOT_APPLICABLE').length
+      const delayed = items.filter(i => i.status === 'DELAYED').length
+      byKey.set(key, {
+        lineId: cl.lineId, date: d, style: cl.description, buyer: cl.buyer, styleNumber: cl.styleNumber,
+        checklistId: cl.id, pct: items.length ? Math.round((done / items.length) * 100) : 0,
+        total: items.length, done, delayed, planId: null, hasPlan: false,
+      })
+    }
+
+    for (const p of plans) {
+      const d = new Date(p.changeoverDate)
+      if (d < new Date(now.toDateString()) || d > cutoff) continue
+      if (p.status === 'COMPLETED') continue
+      const key = `${p.lineId}|${d.toISOString().slice(0, 10)}`
+      const ex = byKey.get(key)
+      if (ex) { ex.planId = p.id; ex.hasPlan = true; ex.planStatus = p.status }
+      else byKey.set(key, {
+        lineId: p.lineId, date: d, style: p.ob?.styleName, buyer: p.ob?.buyer, styleNumber: p.ob?.styleNumber,
+        checklistId: null, pct: null, total: 0, done: 0, delayed: 0, planId: p.id, hasPlan: true, planStatus: p.status,
+      })
+    }
+
+    return Array.from(byKey.values()).sort((a, b) => a.date - b.date).slice(0, 8)
+  }, [checklists, plans])
+
+  if (items.length === 0) {
+    return (
+      <Card>
+        <CardContent className="p-5 text-center text-slate-400">
+          <Calendar size={28} className="mx-auto mb-2 text-slate-300" />
+          <p className="text-sm">No changeovers scheduled in the next 21 days.</p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+          <Calendar size={15} className="text-teal-600" /> Upcoming Scheduled Changeovers
+        </h3>
+        <span className="text-xs text-slate-500">Next 21 days · {items.length} scheduled</span>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+        {items.map(it => {
+          const days = daysUntil(it.date)
+          const urgency = days <= 2 ? 'border-red-300 bg-red-50' : days <= 5 ? 'border-amber-300 bg-amber-50' : 'border-slate-200 bg-white'
+          const daysBadge = days <= 2 ? 'red' : days <= 5 ? 'amber' : 'teal'
+          return (
+            <button key={`${it.lineId}-${it.date.toISOString()}`}
+              onClick={() => it.checklistId ? onOpen(it.checklistId) : null}
+              disabled={!it.checklistId}
+              className={`text-left border rounded-lg p-3 transition-shadow ${urgency} ${it.checklistId ? 'hover:shadow-md cursor-pointer' : 'cursor-default opacity-90'}`}>
+              <div className="flex items-start justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-lg bg-navy-900 text-white text-xs font-bold flex items-center justify-center">{it.lineId}</div>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800 leading-tight">{it.style || '—'}</p>
+                    <p className="text-[10px] text-slate-500 font-mono leading-tight">{it.styleNumber}</p>
+                  </div>
+                </div>
+                <Badge variant={daysBadge}>{days >= 0 ? `T-${days}` : 'Past'}</Badge>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-500">{fmtDate(it.date)}</span>
+                {it.delayed > 0 && (
+                  <span className="flex items-center gap-1 text-red-600 font-medium">
+                    <AlertTriangle size={11} /> {it.delayed}
+                  </span>
+                )}
+              </div>
+              {it.checklistId ? (
+                <div className="mt-2">
+                  <div className="flex justify-between text-[10px] text-slate-500 mb-1">
+                    <span>{it.done}/{it.total} tasks</span><span>{it.pct}%</span>
+                  </div>
+                  <Progress value={it.pct} color="auto" size="sm" />
+                </div>
+              ) : (
+                <div className="mt-2 text-[10px] text-slate-400 italic">
+                  {it.hasPlan ? `Allocation plan ${it.planStatus} — no checklist yet` : 'No checklist'}
+                </div>
+              )}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 export default function ChangeoverChecklist() {
   const [filterLine, setFilterLine] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
@@ -252,6 +357,17 @@ export default function ChangeoverChecklist() {
   const { data: checklists = [], isLoading } = useQuery({
     queryKey: ['checklists', filterLine, filterStatus],
     queryFn: () => api.getChecklists({ lineId: filterLine, status: filterStatus }),
+  })
+
+  // Pull all checklists (unfiltered) for the upcoming panel
+  const { data: allChecklists = [] } = useQuery({
+    queryKey: ['checklists-all'],
+    queryFn: () => api.getChecklists(),
+  })
+
+  const { data: plans = [] } = useQuery({
+    queryKey: ['plans'],
+    queryFn: () => api.getPlans(),
   })
 
   if (isLoading) return <LoadingPage />
@@ -266,7 +382,9 @@ export default function ChangeoverChecklist() {
         <Button variant="primary" onClick={() => setShowNew(true)}><Plus size={15} /> New Checklist</Button>
       </div>
 
-      <div className="flex gap-3">
+      <UpcomingPanel checklists={allChecklists} plans={plans} onOpen={setSelectedId} />
+
+      <div className="flex gap-3 pt-2 border-t border-slate-100">
         <Select value={filterLine} onChange={e => setFilterLine(e.target.value)} className="w-28">
           <option value="">All Lines</option>
           {LINES.map(l => <option key={l}>{l}</option>)}
